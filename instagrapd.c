@@ -5,12 +5,18 @@
 #include <netinet/in.h>
 #include <string.h>
 
+const char pair1[2][128] = {"21700726", "csh726"};
+const char pair2[2][128] = {"21600830", "dyj830"};
+
 void child_proc(int conn) {
 	char buf[1024];
 	char *data = 0x0, *orig = 0x0;
+
+	int argc = 0;
+	char **argv;
+	
 	int len = 0;
 	int s;
-
 	while ((s=recv(conn, buf, 1023, 0))>0) {
 		buf[s] = 0x0;
 		if(data == 0x0) {
@@ -49,8 +55,6 @@ int main(int argc, char const *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	printf("socket created ! \n");
-
 	memset(&address, '0', sizeof(address));
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = INADDR_ANY; // the local host
@@ -61,16 +65,11 @@ int main(int argc, char const *argv[]) {
 		exit(EXIT_FAILURE);
 	}
 
-	printf("socket bound ! \n");
-
 	while (1) {
-		printf("listening ... \n");
 		if(listen(listen_fd, 16) < 0) { // size of waiting queue
 			perror("listen failed : ");
 			exit(EXIT_FAILURE);
 		}
-
-		printf("accepting in new socket ... \n");
 
 		new_socket = accept(listen_fd, (struct sockaddr *) &address, (socklen_t *)&addrlen);
 
@@ -79,13 +78,10 @@ int main(int argc, char const *argv[]) {
 			exit(EXIT_FAILURE);
 		}
 		
-		printf("forking ... \n");
 		if(fork() > 0) {
-			printf("child_proc -> new_socket\n");
 			child_proc(new_socket);
 		}
 		else {
-			printf("closed new socket\n");
 			close(new_socket);
 		}
 	}
